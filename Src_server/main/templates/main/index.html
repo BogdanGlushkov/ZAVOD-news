@@ -1,0 +1,103 @@
+{% extends 'main/base.html'%}
+{% load static %}
+
+{% block title %}
+Хобости | HOBOSTI
+{% endblock %}
+
+{% block content %}
+<section class="lending">
+    <div class="container">
+        <div class="lending__item">
+            <br>
+            <br>
+            <br>
+
+            <div class="tags-block">
+
+                {% if tag_selected == None %}
+                <span class="tag_selected"> Все новости </span>
+                {% else %}
+                <a href="{% url 'home' %}" class="tag"> Все новости </a>
+                {% endif %}
+
+                {% for tag in tags %}
+
+                {% if tag.slug == tag_selected %}
+                <span class="tag_selected">{{ tag.title }}</span>
+                {% else %}
+                <a class="tag" href="{{ tag.get_absolute_url }}"> {{ tag.title }} </a>
+                {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+            <div class="news-blocks" style="display: flex">
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<script>
+    let page = 1;
+    const newsContainer = document.querySelector('.news-blocks');
+    let isLoading = false; // Boolean-переменная для отслеживания состояния загрузки
+    let tagSlug = null; // Переменная для хранения slug тега
+    const link = new URL(window.location.href);
+    tagSlug = link.pathname.split('/').pop();
+
+    function loadNews(tagSlugParam = null) {
+        if (isLoading) return; // Если уже загружаем, выходим из функции
+        isLoading = true; // Устанавливаем флаг загрузки в true
+
+        // Проверяем, передан ли параметр tagSlugParam, и если да, то используем его
+        tagSlug = tagSlugParam || tagSlug;
+
+        let url = `/api/news`;
+        if (tagSlug) {
+            url += `/tags/${tagSlug}`;
+        }
+        url += `/${page}`;
+
+        fetch(url)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                data.forEach(function (newsItem) {
+                    const article = document.createElement('article');
+                    article.innerHTML = `
+                            <img src="${newsItem.photo}" alt="${newsItem.title}">
+                            <h3>${newsItem.title}</h3>
+                            <div style="display: flex; justify-content: space-between;}">
+                                <a href="/theme/${newsItem.slug}">
+                                    <button>Прочитать новость</button>
+                                </a>
+                            </div>
+                        `;
+                    newsContainer.appendChild(article);
+                });
+                page++;
+            })
+            .finally(() => {
+                isLoading = false; // Сбрасываем флаг загрузки после завершения
+
+            });
+    }
+
+    window.addEventListener('scroll', function () {
+        const scrolledTo = window.scrollY + window.innerHeight;
+        const isReachBottom = document.body.scrollHeight - 50 <= scrolledTo; // 100 - это порог в пикселях до конца страницы
+
+        if (isReachBottom && !isLoading) {
+            loadNews();
+        }
+    });
+
+    loadNews();
+</script>
+
+{% endblock %}

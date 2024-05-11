@@ -1,0 +1,44 @@
+{% extends 'main/base.html'%}
+{% load static %}
+
+{% block title %}
+Хобости | HOBOSTI
+{% endblock %}
+
+{% block content %}
+<section class="lending">
+    <div class="container">
+        <ul id="Tags">
+            {% if tag_selected == 0 %}
+            <li class="selected"> Все новости</li>
+            {% else %}
+            <li><a href="{% url 'home' %}"> Все новости </a></li>
+            {% endif %}
+
+            {% for tag in tags %}
+
+            {% if tag.slug == tag_selected %}
+            <li class="selected"> {{ tag.title }}</li>
+            {% else %}
+            <li><a href="{{ tag.get_absolute_url }}"> {{ tag.title }} </a></li>
+            {% endif %}
+
+            {% endfor %}
+        </ul>
+        <br>
+        <br>
+        <br>
+        <ul>
+            {% for new in news %}
+            <li>
+                <h2>{{ new.title }}</h2>
+                <img src="{{ MEDIA_URL }}{{ new.photo.url }}" alt="{{ new.title }}" style="width: 1160px;">
+                <p class="link-theme"><a href="{{ new.get_absolute_url }}"> Прочитать новость </a></p>
+                <hr>
+            </li>
+            {% endfor %}
+        </ul>
+
+    </div>
+</section>
+{% endblock %}

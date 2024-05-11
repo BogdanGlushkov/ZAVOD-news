@@ -1,0 +1,109 @@
+{% extends 'main/base.html'%}
+{% load static %}
+
+{% block title %}
+Хобости | HOBOSTI
+{% endblock %}
+
+{% block content %}
+<section class="lending">
+    <div class="container">
+        <div class="lending__item">
+            <br>
+            <br>
+            <br>
+
+            <div class="news-blocks" style="display: flex; justify-content: center;">
+
+                <article>
+                    {% if theme.photo %}
+                    <img src="{{ MEDIA_URL }}{{ theme.photo.url }}" alt="{{ theme.title }}">
+                    {% endif %}
+                    <h2>{{ theme.title }}</h2>
+                    <h3>{{ theme.text }}</h3>
+                    <button id="likeButton">Like <span id="likeCount">{{ theme.likes }}</span></button>
+                    <button id="dislikeButton">Dislike <span id="dislikeCount">{{ theme.dislikes }}</span></button>
+
+                </article>
+
+                <div class="tags-block">
+                    <a href="{% url 'home' %}" class="tag"> Все новости </a>
+                    {% for tag in tags %}
+                    <a class="tag" href="{{ tag.get_absolute_url }}"> {{ tag.title }} </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const websocketProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsEndpoint = `${websocketProtocol}://${window.location.host}/ws/review/{{ theme.slug }}/`;
+
+    const socket = new WebSocket(wsEndpoint);
+
+    socket.onopen = (event) => {
+        console.log("WebSocket connection opened!");
+    };
+
+    socket.onclose = (event) => {
+        console.log("WebSocket connection closed!");
+    };
+
+    // 
+    let themeSlug = null;
+    const link = new URL(window.location.href);
+    themeSlug = link.pathname.split('/').pop();
+
+    let isLiked = false;
+    let isDisliked = false;
+
+
+    likeButton.addEventListener('click', function () {
+        this.disabled = true;
+        dislikeButton.disabled = false;
+        isLiked = true;
+        updateReview('like', themeSlug) // like +1
+
+        if (isDisliked) {
+            Disliked = false;
+            updateReview('-dislike', themeSlug) // dislike -1
+        }
+    });
+
+
+
+    dislikeButton.addEventListener('click', function () {
+        this.disabled = true;
+        likeButton.disabled = false;
+        isDisliked = true;
+        updateReview('dislike', themeSlug) // dislike +1
+
+        if (isLiked) {
+            isLiked = false;
+            updateReview('-like', themeSlug) // like -1
+        }
+
+    });
+    // 
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log(data.likes);
+        console.log(data.dislikes);
+        document.getElementById('likeCount').textContent = data.likes;
+        document.getElementById('dislikeCount').textContent = data.dislikes;
+    };
+
+
+    function updateReview(action, theme_slug) {
+        const message = { 'action': action, 'theme_slug': theme_slug };
+        socket.send(JSON.stringify({
+            action: action,
+            theme_slug: theme_slug,
+        }));
+    };
+</script>
+
+{% endblock %}
